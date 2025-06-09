@@ -3,38 +3,74 @@ name: Build FluidLite Static Libraries
 on: [push, pull_request]
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  # Trabajo para Windows y macOS usando una Matriz
+  build-desktop:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: fluidlite-windows
+            library_path: build/Release/fluidlite.lib
+          - os: macos-latest
+            artifact_name: fluidlite-macos
+            library_path: build/libfluidlite.a
+            
+    runs-on: ${{ matrix.os }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure and build
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure and Build
         run: |
           mkdir build
           cd build
           cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
           cmake --build . --config Release
-          dir Release
-          
-  build-macos:
+
+      - name: Upload Static Library and Headers
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.library_path }}
+            include/fluidlite.h # Asegúrate que la ruta al header sea correcta
+
+  # Trabajo específico para iOS, creando una librería universal
+  build-ios-universal:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure and build
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build for iOS Devices (arm64)
         run: |
-          mkdir build
-          cd build
-          cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
-          cmake --build .
-          ls -la
+          mkdir build_arm64
+          cd build_arm64
+          cmake .. -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_SF3=YES -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF -DCMAKE_IOS_INSTALL_COMBINED=YES
+          cmake --build . --config Release
+
+      - name: Build for iOS Simulator (x86_64 + arm64)
+        run: |
+          mkdir build_sim
+          cd build_sim
+          cmake .. -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_SYSROOT=iphonesimulator -DCMAKE_BUILD_TYPE=Release -DENABLE_SF3=YES -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF -DCMAKE_IOS_INSTALL_COMBINED=YES
+          cmake --build . --config Release
           
-  build-ios:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure and build
+      - name: Create Universal (Fat) Library
         run: |
-          mkdir build_ios
-          cd build_ios
-          cmake .. -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_SF3=YES -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
-          cmake --build .
-          ls -la
+          mkdir universal
+          lipo -create \
+            "build_arm64/libfluidlite.a" \
+            "build_sim/libfluidlite.a" \
+            -output "universal/libfluidlite.a"
+          lipo -info universal/libfluidlite.a # Muestra información para verificar que es universal
+
+      - name: Upload iOS Universal Library and Headers
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluidlite-ios-universal
+          path: |
+            universal/libfluidlite.a
+            include/fluidlite.h # Asegúrate que la ruta al header sea correcta
