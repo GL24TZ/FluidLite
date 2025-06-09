@@ -6,7 +6,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Configure
         run: |
           mkdir build
@@ -17,7 +17,7 @@ jobs:
           cd build
           cmake --build . --config Release
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fluidlite-windows-static
           path: |
@@ -27,7 +27,7 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Configure
         run: |
           mkdir build_macos
@@ -38,7 +38,7 @@ jobs:
           cd build_macos
           cmake --build .
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fluidlite-macos-static
           path: |
@@ -48,7 +48,7 @@ jobs:
   build-ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Configure
         run: |
           mkdir build_ios
@@ -59,7 +59,7 @@ jobs:
           cd build_ios
           cmake --build .
       - name: Upload iOS artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fluidlite-ios-static
           path: |
