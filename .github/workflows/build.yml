@@ -13,12 +13,13 @@ jobs:
           cd build
           cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
           cmake --build . --config Release
-          dir Release
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: fluidlite-windows-static
-          path: build/Release/*.lib
+          path: |
+            build/Release/*.lib
+            include/*.h
           
   build-macos:
     runs-on: macos-latest
@@ -30,12 +31,13 @@ jobs:
           cd build
           cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
           cmake --build .
-          ls -la
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: fluidlite-macos-static
-          path: build/*.a
+          path: |
+            build/*.a
+            include/*.h
           
   build-ios:
     runs-on: macos-latest
@@ -47,9 +49,10 @@ jobs:
           cd build_ios
           cmake .. -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_SF3=YES -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
           cmake --build .
-          ls -la
       - name: Upload iOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: fluidlite-ios-static
-          path: build_ios/*.a
+          path: |
+            build_ios/*.a
+            include/*.h
