@@ -1,0 +1,67 @@
+name: Build FluidLite Static Libraries
+
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: fluidlite-windows-static
+          path: |
+            build/Release/fluidlite-static.lib
+            include/*.h
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure
+        run: |
+          mkdir build_macos
+          cd build_macos
+          cmake .. -DENABLE_SF3=YES -DCMAKE_BUILD_TYPE=Release -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
+      - name: Build
+        run: |
+          cd build_macos
+          cmake --build .
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: fluidlite-macos-static
+          path: |
+            build_macos/libfluidlite-static.a
+            include/*.h
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure
+        run: |
+          mkdir build_ios
+          cd build_ios
+          cmake .. -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES="arm64" -DCMAKE_BUILD_TYPE=Release -DENABLE_SF3=YES -DFLUIDLITE_BUILD_STATIC=ON -DFLUIDLITE_BUILD_SHARED=OFF
+      - name: Build
+        run: |
+          cd build_ios
+          cmake --build .
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: fluidlite-ios-static
+          path: |
+            build_ios/libfluidlite-static.a
+            include/*.h
